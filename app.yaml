@@ -1,11 +1,15 @@
 runtime: python312
+
 env: flex
 
-entrypoint: streamlit run web/main.py --browser.serverAddress 0.0.0.0 --server.port 8080 
-
-instance_class: F1
+runtime_config:
+  operating_system: "ubuntu22"
+  runtime_version: "3.12"
 
 env_variables:
   GOOGLE_APPLICATION_CREDENTIALS: $GCP_CREDENTIALS_PATH
   POSTGRES_USER: $POSTGRES_USER
   POSTGRES_PASS: $POSTGRES_PASS
+
+entrypoint: streamlit run web/main.py --browser.serverAddress 0.0.0.0 --server.port 8080 
+
