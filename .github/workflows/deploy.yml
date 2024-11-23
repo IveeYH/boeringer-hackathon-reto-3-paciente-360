@@ -3,7 +3,7 @@ name: Deploy to Google App Engine
 on:
   push:
     branches:
-      - main  # Ajusta si necesitas usar otra rama para el despliegue
+      - main
   workflow_dispatch:
 
 jobs:
@@ -21,15 +21,15 @@ jobs:
 
     - name: Authenticate with Google Cloud
       env:
-        GOOGLE_APPLICATION_CREDENTIALS: /dev/null
+        GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
       run: |
         if [ -z "$GCP_CREDENTIALS" ]; then
-          echo "ERROR: GCP_CREDENTIALS secret is not set."
+          echo "ERROR: GCP_CREDENTIALS secret is not set or empty."
           exit 1
         fi
         echo "$GCP_CREDENTIALS" | gcloud auth activate-service-account --key-file=/dev/stdin
         gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-        gcloud auth list  # Verifica si la autenticación fue exitosa
+        gcloud auth list  # Verifica la autenticación activa
 
     - name: Install dependencies
       run: |
