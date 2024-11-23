@@ -31,7 +31,7 @@ jobs:
     - name: Deploy to App Engine
       env:
         GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-        GCP_CREDENTIALS_PATH: /credentials.json
+        GCP_CREDENTIALS_PATH: credentials.json
         POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
         POSTGRES_PASS: ${{ secrets.POSTGRES_PASS }}
       run: |
