@@ -1,5 +1,5 @@
 runtime: python312
-entrypoint: streamlit run web/main.py --server.port 443 --server.headless true
+entrypoint: streamlit run web/main.py --server.port 8080 --server.headless true
 
 instance_class: F1
 
@@ -10,7 +10,7 @@ automatic_scaling:
   max_instances: 5
 
 env_variables:
-  STREAMLIT_SERVER_PORT: 443
+  STREAMLIT_SERVER_PORT: 8080
   STREAMLIT_SERVER_HEADLESS: true
   GOOGLE_APPLICATION_CREDENTIALS: $GCP_CREDENTIALS_PATH
   POSTGRES_USER: $POSTGRES_USER
