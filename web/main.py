@@ -1,43 +1,27 @@
 import streamlit as st
 from google.cloud.sql.connector import Connector
 import os
+import random
+import uuid
 
 APP_TITLE = 'Care360'
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "C:/Users/ruben/Documents/GCP_SA/reto-3-boehringer-paciente-360-f6971bde1c10.json"
 
-def postgresql_connect():
-    """
-    Returns the connection to the PSQL database, for further queries.
-    """
-    connector = Connector()
-    psql_conn = connector.connect(
-        "reto-3-boehringer-paciente-360:europe-west1:r3bp360-cloudsql-main-database",
-        "pg8000",
-        user =  "streamlit",
-        password =  "streamlit",
-        db = "postgres"
-    )
-
-    return psql_conn
-    
-def get_patients_list():
-    """
-    Returns the patients data list.
-    """
-
-    conn = postgresql_connect()
-
-    cur = conn.cursor()
-    sql = "SELECT * FROM r3bp360.users_analytics;"
-    cur.execute(sql)
-    result = cur.fetchall()
-    return result
-
-
 st.title(APP_TITLE)
 
+st.markdown("""
+            
+    Welcome to :red[Care360], your all-in-one healthcare management tool. With our platform, you can effortlessly:
 
-st.write(get_patients_list())
+    - Check Patient Stats: Access and review up-to-date health information for your patients in real-time. 
+    - Create and Modify Patient Stats: Easily input or update patient data to keep records accurate and current.
+    - LLM Drug Recommender: Utilize our advanced language model to get intelligent drug recommendations tailored to each patient’s unique needs.
+    - Streamline your workflow, improve patient care, and make data-driven decisions with :red[Care360].
+
+            """)
+
+
+
 
 
 
