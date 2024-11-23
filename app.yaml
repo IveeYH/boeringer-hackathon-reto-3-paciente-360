@@ -1,6 +1,7 @@
-runtime: python312
+runtime: python
 runtime_config:
   operating_system: "ubuntu18"
+  runtime_version: "3.8"
 
 entrypoint: streamlit run --server.port 8080 --server.address=0.0.0.0 --server.enableCORS=false --server.enableWebsocketCompression=false --server.enableXsrfProtection=false --server.headless=true  web/main.py
 
