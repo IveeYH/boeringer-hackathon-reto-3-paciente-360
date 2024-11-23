@@ -24,8 +24,8 @@ jobs:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
       run: |
         echo "${{ secrets.GCP_CREDENTIALS }}" > /tmp/credentials.json
-        gcloud auth activate-service-account --key-file=/tmp/credentials.json
-        gcloud config set project ${{ secrets.GCP_PROJECT_ID }} 
+        gcloud auth activate-service-account --key-file="/tmp/credentials.json"
+        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Install dependencies
       run: |
