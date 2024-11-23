@@ -1,8 +1,4 @@
 import streamlit as st
-from google.cloud.sql.connector import Connector
-import os
-import random
-import uuid
 
 APP_TITLE = 'Care360'
 

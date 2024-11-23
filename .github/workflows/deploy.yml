@@ -19,18 +19,6 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Authenticate with Google Cloud
-      env:
-        GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-      run: |
-        if [ -z "$GCP_CREDENTIALS" ]; then
-          echo "ERROR: GCP_CREDENTIALS secret is not set or empty."
-          exit 1
-        fi
-        echo "$GCP_CREDENTIALS" | gcloud auth activate-service-account --key-file=/dev/stdin
-        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-        gcloud auth list  # Verifica la autenticación activa
-
     - name: Install dependencies
       run: |
         if [ ! -f requirements.txt ]; then
@@ -43,9 +31,18 @@ jobs:
     - name: Deploy to App Engine
       env:
         GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+        GCP_CREDENTIALS_PATH: /secrets/credentials.json
         POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
         POSTGRES_PASS: ${{ secrets.POSTGRES_PASS }}
       run: |
+        if [ -z "$GCP_CREDENTIALS" ]; then
+          echo "ERROR: GCP_CREDENTIALS secret is not set or empty."
+          exit 1
+        fi
+        echo "$GCP_CREDENTIALS" >> $GCP_CREDENTIALS_PATH
+        gcloud auth activate-service-account --key-file=$GCP_CREDENTIALS_PATH
+        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
         if [ ! -f app.yaml ]; then
           echo "ERROR: app.yaml not found."
           exit 1
