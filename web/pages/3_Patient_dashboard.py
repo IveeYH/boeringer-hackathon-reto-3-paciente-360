@@ -1,6 +1,7 @@
 import streamlit as st
 from google.cloud.sql.connector import Connector
 import pandas as pd
+from os import environ
 
 columns = ['id', 'is_smoker', 'alcohol', 'hours_sitdown', 'physical_activity', 'fam_cardiovascular_dis', 
                               'age', 'sex', 'body_weight', 'height', 'waist', 'heart_rate', 'diastolic_pressure', 'systolic_pressure',

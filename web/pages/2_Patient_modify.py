@@ -3,6 +3,7 @@ from google.cloud.sql.connector import Connector
 import pandas as pd
 import random
 import uuid
+from os import environ
 
 def postgresql_connect():
     """
