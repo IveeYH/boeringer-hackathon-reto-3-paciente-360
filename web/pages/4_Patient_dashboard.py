@@ -2,6 +2,7 @@ import streamlit as st
 from google.cloud.sql.connector import Connector
 import pandas as pd
 from datetime import datetime
+import openai
 from os import environ
 import matplotlib.pyplot as plt
 
@@ -159,6 +160,50 @@ def get_patient_last_doctor_comment(id):
     return df
 
 
+def bmi(body_weight, height):
+    return round(body_weight / (height ** 2), 2)
+
+
+def summary_generator(sex, age, bmi, total_chol, ldl_chol, creatinine, albumin, fasting_glucose, min_words=30, max_words=50):
+
+    prompt = f"""
+        You are a medical professional. You are examining a patient and have been provided with their analytical data. Each variable impacts the patient's health. Do not make any predictions, only describe the current state. If any variable is null, do not mention or consider it.
+
+        Once done, generate a summary of 30 to 50 words based on the following variables:
+
+        Sex: {sex}
+        Age: {age}
+        Body Mass Index: {bmi}
+        Total Cholesterol: {total_chol}
+        LDL Cholesterol: {ldl_chol}
+        Urinary Creatinine: {creatinine}
+        Blood Albumin: {albumin}
+        Fasting Glucose: {fasting_glucose}
+        Here is an example of the expected output:
+        A 35-year-old woman with obesity (BMI of 35), elevated cholesterol (total 215 mg/dl, LDL 170 mg/dl), fasting glucose near the upper normal limit (102 mg/dl), low albumin (22 g/l), and urinary creatinine in the low range (0.5 mg/dl).
+    """
+
+    client = openai.OpenAI()
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                }
+            ]
+        )
+
+        resumen = response.choices[0].message.content
+        return resumen
+    
+    except Exception as e:
+        print(f"Error al generar el resumen: {e}")
+        return ""
+
+
 st.set_page_config(page_title="Patient Dashboard", page_icon=":material/person:")
 
 st.title("Dashboard")
@@ -230,11 +275,21 @@ whole_data = get_patient_data(id_selected[0])
 whole_data.analysis_datetime = pd.to_datetime(whole_data.analysis_datetime)
 last_analysis_date = whole_data.analysis_datetime.max()
 time_between = datetime.now() - last_analysis_date
-
+    
 
 with tab1:
 
-    st.write("The patient has irregular evolution!")
+    st.write(summary_generator(
+        sex=data.sex,
+        age=data.age,
+        bmi=bmi(body_weight=data.body_weight, height=data.height),
+        total_chol=data.total_choles,
+        ldl_chol=data.LDL_chol,
+        creatinine=data.creatinine,
+        albumin=data.albumin,
+        fasting_glucose=data.fasting_glucose
+    ))
+
     if time_between.days > 365:
         st.warning(f"Alert, last analysis was done in {last_analysis_date}, which is more than one year ago!", icon="⚠️")
     
