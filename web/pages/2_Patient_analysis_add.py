@@ -1,6 +1,5 @@
 import streamlit as st
 from google.cloud.sql.connector import Connector
-import pandas as pd
 import random
 import uuid
 from datetime import datetime, timedelta
@@ -19,6 +18,20 @@ def postgresql_connect():
     )
 
     return psql_conn
+
+def get_patients_list_id():
+    """
+    Returns the patients data list.
+    """
+
+    conn = postgresql_connect()
+
+    cur = conn.cursor()
+    sql = f"SELECT DISTINCT id FROM r3bp360.users_analytics;"
+    cur.execute(sql)
+    result = cur.fetchall()
+    return result
+    
     
 
 def generate_registers(n):
@@ -118,12 +131,33 @@ with nr_col2:
         st.write(f"A total of {number_patients} new mockup patients have been created!")
 
 #### Create new register
-st.header("Create a new register!")
+st.header("Create a new analysis register!")
 st.write("""With this functionality, you can create a register!""")
 
 with st.form("add_patient"):
-    st.write("Inside the form")
-    st.selectbox("Smokes", ["y", "n"])
+
+    st.selectbox("Patient_id", list(get_patients_list_id()))
+    
+    ad_col1, ad_col2 = st.columns(2, vertical_alignment="top")
+    with ad_col1:
+        st.date_input("analysis_date")
+    with ad_col2:
+        st.time_input("analysis_time")
+    
+    st.write(":blue[Personal parameters]")
+    fc_pp_col1, fc_pp_col2 = st.columns(2, vertical_alignment="top")
+
+    with fc_pp_col1:
+        st.selectbox("sex", ["f", "m"])
+        st.number_input("body_weight", min_value=40, max_value=200, step=1)
+        st.number_input("waist", min_value=65, max_value=150, step=1)
+    
+    with fc_pp_col2:
+        st.number_input("age", min_value=18, max_value=80, step=1)
+        st.number_input("height", min_value=1.4, max_value=2.1, step=0.01)
+        st.selectbox("fam_cardiovascular_dis", ["y", "n"])
+    
+   
     st.number_input("Alcohol level", min_value=0, max_value=100, step=1)
 
-    submitted = st.form_submit_button("Submit_new_patient")
+    submitted = st.form_submit_button("Submit new analysis")
