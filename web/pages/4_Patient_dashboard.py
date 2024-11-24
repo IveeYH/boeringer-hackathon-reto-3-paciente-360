@@ -3,6 +3,7 @@ from google.cloud.sql.connector import Connector
 import pandas as pd
 from datetime import datetime
 from os import environ
+import matplotlib.pyplot as plt
 
 columns = ['id', 'analysis_datetime', 'is_smoker', 'alcohol', 'hours_sitdown', 'physical_activity', 'fam_cardiovascular_dis', 
            'age', 'sex', 'body_weight', 'height', 'waist', 'heart_rate', 'diastolic_pressure', 
@@ -24,6 +25,7 @@ def postgresql_connect():
 
     return psql_conn
 
+
 def get_patients_list_id():
     """
     Returns the patients data list.
@@ -36,6 +38,62 @@ def get_patients_list_id():
     cur.execute(sql)
     result = cur.fetchall()
     return result
+
+def prevent_risk_with_ckd(row):
+    """
+    Calcula el riesgo cardiovascular a 10 años basado en el modelo PREVENT actualizado.
+    Incluye enfermedad renal (eGFR) como un factor adicional. Devuelve un % de riesgo.
+    También convierte `is_smoker` de "Yes/No" (str) a 1/0 (int) dentro de la función.
+    """
+
+    # Coeficientes del modelo PREVENT con eGFR
+    if row['sex'] == "women":
+        coeffs = {
+            "age": 0.0562,
+            "systolic_pressure": 0.0188,
+            "is_smoker": 0.265,
+            "diabetes": 0.33,
+            "cholesterol_ratio": 0.182,
+            "fam_cardiovascular_dis": 0.42,
+            "eGFR": -0.015,
+        }
+        intercept = -6.72
+    else:
+        coeffs = {
+            "age": 0.0726,
+            "systolic_pressure": 0.0212,
+            "is_smoker": 0.343,
+            "diabetes": 0.39,
+            "cholesterol_ratio": 0.201,
+            "fam_cardiovascular_dis": 0.47,
+            "eGFR": -0.017,
+        }
+        intercept = -6.11
+    
+    if row['is_smoker'] == 'y':
+        is_smoker = 1
+    else:
+        is_smoker = 0
+    if row['fam_cardiovascular_dis'] == 'y':
+        fam_cardiovascular_dis = 1
+    else:
+        fam_cardiovascular_dis = 0
+
+    # Cálculo de la puntuación
+    score = (
+        coeffs["age"] * row['age'] +
+        coeffs["systolic_pressure"] * row['systolic_pressure'] +
+        coeffs["is_smoker"] * is_smoker +
+        coeffs["diabetes"] * 0 +
+        coeffs["cholesterol_ratio"] * (row['total_choles'] / row['HDL_chol']) +
+        coeffs["fam_cardiovascular_dis"] * fam_cardiovascular_dis
+    ) + intercept
+
+    # Conversión a probabilidad de riesgo (función logística)
+    risk = 1 / (1 + 2.71828 ** -score)  # Función sigmoidal
+    cvd_risk = round(risk * 100, 2)
+    return cvd_risk
+
     
 def get_last_patient_data(id):
     """
@@ -179,33 +237,46 @@ with tab1:
     st.write("The patient has irregular evolution!")
     if time_between.days > 365:
         st.warning(f"Alert, last analysis was done in {last_analysis_date}, which is more than one year ago!", icon="⚠️")
+    
+    whole_data["risk_ckd"] =  whole_data.apply(prevent_risk_with_ckd, axis=1)
+
+
+
+    graph1_data = whole_data[['total_choles', 'triglycerides', 'HDL_chol', 'LDL_chol', 'analysis_datetime']].copy()
+    graph2_data = whole_data[['sex', 'age', 'albumin', 'creatinine', 'diastolic_pressure', 'systolic_pressure', 'analysis_datetime']].copy()
+    
+    # Calculations
+    graph1_data['total_choles'] = graph1_data['total_choles'] * 0.0259
+    graph1_data['triglycerides'] = graph1_data['triglycerides'] * 0.0113
+    graph1_data['HDL_chol'] = graph1_data['HDL_chol'] * 0.0259
+    graph1_data['LDL_chol'] = graph1_data['LDL_chol'] * 0.0259
+
+    graph2_data['creatinine'] = graph2_data['creatinine'].astype(float) * 88.4
 
     ov_col1, ov_col2 = st.columns(2, vertical_alignment="top")
-    whole_data = whole_data.set_index("analysis_datetime")
-    # Weight plot
-    ov_col1.subheader("Weight")
-    data_weight = whole_data.body_weight
-    ov_col1.line_chart(data_weight, use_container_width=True, height=150)
-    # Systolic plot
-    ov_col1.subheader("Systolic")
-    data_systolic = whole_data.systolic_pressure
-    ov_col1.line_chart(data_systolic, use_container_width=True, height=150)
-    # Triglycerides plot
-    ov_col1.subheader("Triglycerides")
-    data_triglycerides = whole_data.triglycerides
-    ov_col1.line_chart(data_triglycerides, use_container_width=True, height=150)
-    # LDL_chol plot
-    ov_col2.subheader("LDL_chol")
-    data_LDL_chol = whole_data.LDL_chol
-    ov_col2.line_chart(data_LDL_chol, use_container_width=True, height=150)
-    # creatinine plot
-    ov_col2.subheader("Creatinine")
-    data_creatinine = whole_data.creatinine
-    ov_col2.line_chart(data_creatinine, use_container_width=True, height=150)
-    # LDL_chol plot
-    ov_col2.subheader("Fasting glucose")
-    data_fasting_glucose = whole_data.fasting_glucose
-    ov_col2.line_chart(data_fasting_glucose, use_container_width=True, height=150)
+    
+    with ov_col1:
+        p = graph1_data.plot(x='analysis_datetime', y=['total_choles', 'triglycerides', 'HDL_chol', 'LDL_chol'], ylabel="mmol/l", xlabel="Analysis date")
+        st.pyplot(p.figure)
+    
+    with ov_col2:
+        p2 = graph2_data.plot(x='analysis_datetime', y=['albumin', 'creatinine', 'diastolic_pressure', 'systolic_pressure'], xlabel="Analysis date")
+        st.pyplot(p2.figure)
+    
+    most_recent_row = whole_data.loc[whole_data.index.max()]
+    if most_recent_row['risk_ckd'] > 80:
+        st.warning(f"Alert, last analysis showed a CKD risk higher than 80!", icon="⚠️")
+
+    column_risk = most_recent_row['risk_ckd']
+    remaining_value = 100 - column_risk
+
+    fig, ax = plt.subplots()
+    ax.pie(
+        [column_risk, remaining_value],
+        autopct='%1.1f%%',
+    )
+
+    st.pyplot(fig)
 
 with tab2:
 
