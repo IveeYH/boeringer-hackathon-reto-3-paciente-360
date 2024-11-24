@@ -25,25 +25,31 @@ def get_patients_list():
     conn = postgresql_connect()
 
     cur = conn.cursor()
-    sql = "SELECT * FROM r3bp360.users_analytics;"
+    sql = """
+        WITH ranked_rows AS (
+            SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY id ORDER BY analysis_datetime DESC) AS rn
+        FROM r3bp360.users_analytics
+        )
+        SELECT id, analysis_datetime, is_smoker, alcohol, hours_sitdown, physical_activity, fam_cardiovascular_dis, 
+                age, sex, body_weight, height, waist, heart_rate, diastolic_pressure, systolic_pressure,
+                total_choles, triglycerides, HDL_chol, LDL_chol, creatinine, albumin, hba1c, 
+                fasting_glucose, test_glucose
+        FROM ranked_rows
+        WHERE rn = 1;    
+        """
     cur.execute(sql)
     result = cur.fetchall()
     return result
 
-columns = ['id', 'is_smoker', 'alcohol', 'hours_sitdown', 'physical_activity', 'fam_cardiovascular_dis', 
+columns = ['id', 'analysis_datetime', 'is_smoker', 'alcohol', 'hours_sitdown', 'physical_activity', 'fam_cardiovascular_dis', 
                               'age', 'sex', 'body_weight', 'height', 'waist', 'heart_rate', 'diastolic_pressure', 'systolic_pressure',
                               'total_choles', 'triglycerides', 'HDL_chol', 'LDL_chol', 'creatinine', 'albumin', 'hba1c', 
                               'fasting_glucose', 'test_glucose']
 
-st.set_page_config(page_title="Whole Patient List Demo", page_icon=":material/groups:")
+st.set_page_config(page_title="Whole Patient List", page_icon=":material/groups:")
 
-st.write(
-    """This demo illustrates a combination of plotting and animation with
-Streamlit. We're generating a bunch of random numbers in a loop for around
-5 seconds. Enjoy!"""
-)
-
-
+st.title("Patients most recent analysis")
 
 df = pd.DataFrame(get_patients_list(), columns=columns)
 

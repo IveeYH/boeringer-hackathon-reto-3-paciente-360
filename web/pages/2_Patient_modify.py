@@ -3,6 +3,7 @@ from google.cloud.sql.connector import Connector
 import pandas as pd
 import random
 import uuid
+from datetime import datetime, timedelta
 
 def postgresql_connect():
     """
@@ -28,11 +29,14 @@ def generate_registers(n):
     :return: List of registers, where each register is a dictionary.
     """
     registers_list = []
+    delta = datetime(2023,12,31) - datetime(2018,1,1)
 
     for _ in range(n):
 
+
         register_aux = {
             'id': str(uuid.uuid4()),
+            'analysis_datetime': datetime(2018,1,1) + timedelta(seconds = random.randint(0, int(delta.total_seconds()))),
             'is_smoker':  random.choice(['y', 'n']),
             'alcohol': int(random.randint(0, 100)),
             'hours_sitdown': random.randint(0, 20),
@@ -67,16 +71,16 @@ def write_patient_register(register_list):
     conn = postgresql_connect()
     cur = conn.cursor()
     insert_query = """
-    INSERT INTO r3bp360.users_analytics (id, is_smoker, alcohol, hours_sitdown, physical_activity, fam_cardiovascular_dis, 
+    INSERT INTO r3bp360.users_analytics (id, analysis_datetime, is_smoker, alcohol, hours_sitdown, physical_activity, fam_cardiovascular_dis, 
                               age, sex, body_weight, height, waist, heart_rate, diastolic_pressure, systolic_pressure,
                               total_choles, triglycerides, HDL_chol, LDL_chol, creatinine, albumin, hba1c, 
                               fasting_glucose, test_glucose)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
 
     for register in register_list:
         values = (
-            register['id'], register['is_smoker'], register['alcohol'], register['hours_sitdown'], 
+            register['id'], register['analysis_datetime'], register['is_smoker'], register['alcohol'], register['hours_sitdown'], 
             register['physical_activity'], register['fam_cardiovascular_dis'], register['age'], register['sex'],
             register['body_weight'], register['height'], register['waist'], register['heart_rate'], 
             register['diastolic_pressure'], register['systolic_pressure'], register['total_choles'], 
