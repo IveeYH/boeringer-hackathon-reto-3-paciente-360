@@ -18,21 +18,21 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-        project_id: ${{ env.GCP_PROJECT_ID }}
+        project_id: ${{ vars.GCP_PROJECT_ID }}
 
     - name: Configure Docker for Artifact Registry
-      run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+      run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev
 
     - name: Build Docker image
       run: |
-        export IMAGE_NAME=${{ env.GCP_PROJECT_ID }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }}
+        export IMAGE_NAME=${{ vars.GCP_PROJECT_ID }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }}
         docker build -t $IMAGE_NAME .
         docker push $IMAGE_NAME
 
     - name: Deploy to Cloud Run
       run: |
-        gcloud run deploy ${{ env.CLOUD_RUN_SERVICE_NAME }} \
-          --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }} \
-          --region ${{ env.GCP_REGION }} \
+        gcloud run deploy ${{ vars.CLOUD_RUN_SERVICE_NAME }} \
+          --image ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }} \
+          --region ${{ vars.GCP_REGION }} \
           --platform managed \
           --allow-unauthenticated
