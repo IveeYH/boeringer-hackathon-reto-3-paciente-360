@@ -1,4 +1,4 @@
-name: Deploy to Google App Engine
+name: Build and Deploy to Cloud Run
 
 on:
   push:
@@ -7,43 +7,39 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - id: "auth"
+      uses: "google-github-actions/auth@v1"
       with:
-        python-version: '3.12'
+        credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
 
-    - name: Authenticate with Google Cloud
-      env:
-        GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-      run: |
-        if [ -z "$GCP_CREDENTIALS" ]; then
-          echo "ERROR: GCP_CREDENTIALS secret is not set or empty."
-          exit 1
-        fi
-        echo "$GCP_CREDENTIALS" | gcloud auth activate-service-account --key-file=/dev/stdin
-        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-        gcloud auth list  # Verifica la autenticación activa
+    - name: "Set up Cloud SDK"
+      uses: "google-github-actions/setup-gcloud@v1"
+    
+    - name: "Use gcloud CLI"
+      run: "gcloud info"
 
-    - name: Install dependencies
-      run: |
-        if [ ! -f requirements.txt ]; then
-          echo "ERROR: requirements.txt not found."
-          exit 1
-        fi
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
 
-    - name: Deploy to App Engine
+    - name: Build Docker image
       run: |
-        if [ ! -f app.yaml ]; then
-          echo "ERROR: app.yaml not found."
-          exit 1
-        fi
-        gcloud app deploy app.yaml --quiet
+        export IMAGE_NAME=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }}
+        docker build -t $IMAGE_NAME .
+        docker push $IMAGE_NAME
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy ${{ vars.CLOUD_RUN_SERVICE_NAME }} \
+          --image ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }} \
+          --region ${{ vars.GCP_REGION }} \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" \
+          --set-env-vars "POSTGRES_PASS=${{ secrets.POSTGRES_PASS }}"
