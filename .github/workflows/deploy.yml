@@ -43,4 +43,4 @@ jobs:
           --allow-unauthenticated \
           --set-env-vars "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" \
           --set-env-vars "POSTGRES_PASS=${{ secrets.POSTGRES_PASS }}" \
-          --set-env-vars "OPENAI_API_TOKEN=${{ secrets.OPEN_AI_TOKEN }}"
+          --set-env-vars "OPENAI_API_KEY=${{ secrets.OPEN_AI_TOKEN }}"
