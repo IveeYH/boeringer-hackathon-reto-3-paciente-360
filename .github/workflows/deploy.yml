@@ -40,4 +40,6 @@ jobs:
           --image ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }} \
           --region ${{ vars.GCP_REGION }} \
           --platform managed \
-          --allow-unauthenticated
+          --allow-unauthenticated \
+          --set-env-vars "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" \
+          --set-env-vars "POSTGRES_PASS=${{ secrets.POSTGRES_PASS }}"
