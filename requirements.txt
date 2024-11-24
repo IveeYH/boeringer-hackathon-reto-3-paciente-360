@@ -3,3 +3,4 @@ july==0.1.3
 openai==1.55.0
 pg8000==1.31.2
 streamlit==1.40.1
+matplotlib==3.5.2
