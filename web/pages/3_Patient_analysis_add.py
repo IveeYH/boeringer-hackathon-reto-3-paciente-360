@@ -136,29 +136,70 @@ st.header("Create a new analysis register!")
 st.write("""With this functionality, you can create a register!""")
 
 with st.form("add_patient"):
+    new_patient = {}
 
-    st.selectbox("Patient_id", list(get_patients_list_id()))
+    new_patient['id'] = st.selectbox("Patient_id", list(get_patients_list_id()))[0]
     
     ad_col1, ad_col2 = st.columns(2, vertical_alignment="top")
     with ad_col1:
-        st.date_input("analysis_date")
+        new_analysis_date = st.date_input("analysis_date")
     with ad_col2:
-        st.time_input("analysis_time")
+        new_analysis_time = st.time_input("analysis_time")
+    
+    new_patient['analysis_datetime'] = datetime.combine(new_analysis_date, new_analysis_time)
     
     st.write(":blue[Personal parameters]")
     fc_pp_col1, fc_pp_col2 = st.columns(2, vertical_alignment="top")
 
     with fc_pp_col1:
-        st.selectbox("sex", ["f", "m"])
-        st.number_input("body_weight", min_value=40, max_value=200, step=1)
-        st.number_input("waist", min_value=65, max_value=150, step=1)
+        new_patient['sex'] = st.selectbox("sex", ["f", "m"])
+        new_patient['body_weight'] = st.number_input("body_weight", min_value=40, max_value=200, step=1)
+        new_patient['waist'] = st.number_input("waist", min_value=65, max_value=150, step=1)
     
     with fc_pp_col2:
-        st.number_input("age", min_value=18, max_value=80, step=1)
-        st.number_input("height", min_value=1.4, max_value=2.1, step=0.01)
-        st.selectbox("fam_cardiovascular_dis", ["y", "n"])
+        new_patient['age'] = st.number_input("age", min_value=18, max_value=80, step=1)
+        new_patient['height'] = st.number_input("height", min_value=1.4, max_value=2.1, step=0.01)
+        new_patient['fam_cardiovascular_dis'] = st.selectbox("fam_cardiovascular_dis", ["y", "n"])
     
-   
-    st.number_input("Alcohol level", min_value=0, max_value=100, step=1)
+    st.write(":blue[Daily habits]")
+    fc_dh_col1, fc_dh_col2 = st.columns(2, vertical_alignment="top")
+
+    with fc_dh_col1:
+        new_patient['is_smoker'] = st.selectbox("is_smoker", ["y", "n"])
+        new_patient['physical_activity'] = st.number_input("physical_activity", min_value=0, max_value=20, step=1)
+    
+    with fc_dh_col2:
+        new_patient['alcohol'] = st.number_input("alcohol", min_value=0, max_value=100, step=1)
+        new_patient['hours_sitdown'] = st.number_input("hours_sitdown", min_value=0, max_value=20, step=1)
+    
+    st.write(":blue[[Heart analysis]")
+    fc_ha_col1, fc_ha_col2, fc_ha_col3 = st.columns(3, vertical_alignment="top")
+
+    with fc_ha_col1:
+        new_patient['heart_rate'] = st.number_input("heart_rate", min_value=30, max_value=150, step=1)
+    with fc_ha_col2:
+        new_patient['diastolic_pressure'] = st.number_input("diastolic_pressure", min_value=20, max_value=140, step=1)
+    with fc_ha_col3:
+        new_patient['systolic_pressure'] = st.number_input("systolic_pressure", min_value=50, max_value=240, step=1)
+    
+    st.write(":blue[Chem analysis]")
+    fc_ca_col1, fc_ca_col2 = st.columns(2, vertical_alignment="top")
+
+    with fc_ca_col1:
+        new_patient['total_choles'] = st.number_input("total_choles", min_value=100, max_value=1000, step=1)
+        new_patient['HDL_chol'] = st.number_input("HDL_chol", min_value=10, max_value=100, step=1)
+        new_patient['creatinine'] = st.number_input("creatinine", min_value=0.1, max_value=10.0, step=0.01)
+        new_patient['albumin'] = st.number_input("albumin", min_value=1.0, max_value=5.5, step=0.01)
+        new_patient['test_glucose'] = st.number_input("test_glucose", min_value=40, max_value=400, step=1)
+    
+    with fc_ca_col2:
+        new_patient['triglycerides'] = st.number_input("triglycerides", min_value=10, max_value=2000, step=1)
+        new_patient['LDL_chol'] = st.number_input("LDL_chol", min_value=10, max_value=700, step=1)
+        new_patient['hba1c'] = st.number_input("hba1c", min_value=4.0, max_value=14.0, step=0.01)
+        new_patient['fasting_glucose'] = st.number_input("fasting_glucose", min_value=40, max_value=300, step=1)
+
 
     submitted = st.form_submit_button("Submit new analysis")
+    if submitted:
+        write_patient_register([new_patient])
+        st.write("New analysis written")
