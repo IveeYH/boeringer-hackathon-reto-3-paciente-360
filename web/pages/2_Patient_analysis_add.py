@@ -1,9 +1,8 @@
 import streamlit as st
 from google.cloud.sql.connector import Connector
-import pandas as pd
 import random
 import uuid
-from os import environ
+from datetime import datetime, timedelta
 
 def postgresql_connect():
     """
@@ -13,12 +12,26 @@ def postgresql_connect():
     psql_conn = connector.connect(
         "reto-3-boehringer-paciente-360:europe-west1:r3bp360-cloudsql-main-database",
         "pg8000",
-        user =  environ["POSTGRES_USER"],
-        password =  environ["POSTGRES_PASS"],
+        user =  "streamlit",
+        password =  "streamlit",
         db = "postgres"
     )
 
     return psql_conn
+
+def get_patients_list_id():
+    """
+    Returns the patients data list.
+    """
+
+    conn = postgresql_connect()
+
+    cur = conn.cursor()
+    sql = f"SELECT DISTINCT id FROM r3bp360.users_analytics;"
+    cur.execute(sql)
+    result = cur.fetchall()
+    return result
+    
     
 
 def generate_registers(n):
@@ -29,11 +42,14 @@ def generate_registers(n):
     :return: List of registers, where each register is a dictionary.
     """
     registers_list = []
+    delta = datetime(2023,12,31) - datetime(2018,1,1)
 
     for _ in range(n):
 
+
         register_aux = {
             'id': str(uuid.uuid4()),
+            'analysis_datetime': datetime(2018,1,1) + timedelta(seconds = random.randint(0, int(delta.total_seconds()))),
             'is_smoker':  random.choice(['y', 'n']),
             'alcohol': int(random.randint(0, 100)),
             'hours_sitdown': random.randint(0, 20),
@@ -68,16 +84,16 @@ def write_patient_register(register_list):
     conn = postgresql_connect()
     cur = conn.cursor()
     insert_query = """
-    INSERT INTO r3bp360.users_analytics (id, is_smoker, alcohol, hours_sitdown, physical_activity, fam_cardiovascular_dis, 
+    INSERT INTO r3bp360.users_analytics (id, analysis_datetime, is_smoker, alcohol, hours_sitdown, physical_activity, fam_cardiovascular_dis, 
                               age, sex, body_weight, height, waist, heart_rate, diastolic_pressure, systolic_pressure,
                               total_choles, triglycerides, HDL_chol, LDL_chol, creatinine, albumin, hba1c, 
                               fasting_glucose, test_glucose)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
 
     for register in register_list:
         values = (
-            register['id'], register['is_smoker'], register['alcohol'], register['hours_sitdown'], 
+            register['id'], register['analysis_datetime'], register['is_smoker'], register['alcohol'], register['hours_sitdown'], 
             register['physical_activity'], register['fam_cardiovascular_dis'], register['age'], register['sex'],
             register['body_weight'], register['height'], register['waist'], register['heart_rate'], 
             register['diastolic_pressure'], register['systolic_pressure'], register['total_choles'], 
@@ -115,12 +131,33 @@ with nr_col2:
         st.write(f"A total of {number_patients} new mockup patients have been created!")
 
 #### Create new register
-st.header("Create a new register!")
+st.header("Create a new analysis register!")
 st.write("""With this functionality, you can create a register!""")
 
 with st.form("add_patient"):
-    st.write("Inside the form")
-    st.selectbox("Smokes", ["y", "n"])
+
+    st.selectbox("Patient_id", list(get_patients_list_id()))
+    
+    ad_col1, ad_col2 = st.columns(2, vertical_alignment="top")
+    with ad_col1:
+        st.date_input("analysis_date")
+    with ad_col2:
+        st.time_input("analysis_time")
+    
+    st.write(":blue[Personal parameters]")
+    fc_pp_col1, fc_pp_col2 = st.columns(2, vertical_alignment="top")
+
+    with fc_pp_col1:
+        st.selectbox("sex", ["f", "m"])
+        st.number_input("body_weight", min_value=40, max_value=200, step=1)
+        st.number_input("waist", min_value=65, max_value=150, step=1)
+    
+    with fc_pp_col2:
+        st.number_input("age", min_value=18, max_value=80, step=1)
+        st.number_input("height", min_value=1.4, max_value=2.1, step=0.01)
+        st.selectbox("fam_cardiovascular_dis", ["y", "n"])
+    
+   
     st.number_input("Alcohol level", min_value=0, max_value=100, step=1)
 
-    submitted = st.form_submit_button("Submit_new_patient")
+    submitted = st.form_submit_button("Submit new analysis")
