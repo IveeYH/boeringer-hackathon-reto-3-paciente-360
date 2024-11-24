@@ -1,7 +1,6 @@
 import streamlit as st
 from google.cloud.sql.connector import Connector
 import pandas as pd
-from os import environ
 from openai import OpenAI
 import os
 from datetime import datetime
@@ -19,8 +18,8 @@ def postgresql_connect():
     psql_conn = connector.connect(
         "reto-3-boehringer-paciente-360:europe-west1:r3bp360-cloudsql-main-database",
         "pg8000",
-        user =  environ["POSTGRES_USER"],
-        password =  environ["POSTGRES_PASS"],
+        user =  "streamlit",
+        password =  "streamlit",
         db = "postgres"
     )
 
