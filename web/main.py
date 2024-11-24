@@ -1,8 +1,4 @@
 import streamlit as st
-from google.cloud.sql.connector import Connector
-import os
-import random
-import uuid
 
 APP_TITLE = 'Care360'
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "C:/Users/ruben/Documents/GCP_SA/reto-3-boehringer-paciente-360-f6971bde1c10.json"

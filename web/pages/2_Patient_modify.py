@@ -3,6 +3,7 @@ from google.cloud.sql.connector import Connector
 import pandas as pd
 import random
 import uuid
+from os import environ
 from datetime import datetime, timedelta
 
 def postgresql_connect():
@@ -13,8 +14,8 @@ def postgresql_connect():
     psql_conn = connector.connect(
         "reto-3-boehringer-paciente-360:europe-west1:r3bp360-cloudsql-main-database",
         "pg8000",
-        user =  "streamlit",
-        password =  "streamlit",
+        user =  environ["POSTGRES_USER"],
+        password =  environ["POSTGRES_PASS"],
         db = "postgres"
     )
 
