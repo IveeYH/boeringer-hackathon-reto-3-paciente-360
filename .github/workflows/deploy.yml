@@ -25,7 +25,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        export IMAGE_NAME=${{ vars.GCP-REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }}
+        export IMAGE_NAME=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY_NAME }}/web-app:${{ github.sha }}
         docker build -t $IMAGE_NAME .
         docker push $IMAGE_NAME
 
